@@ -33,16 +33,27 @@ public class ShoppingCart {
      */
     public void addItem(Product product, int quantity) {
         // TODO (Task 3): add assert pre-condition here
+        // Pre-condition (Task 3)
+        assert product != null : "Product must not be null";
+        assert quantity > 0 : "Quantity must be > 0";
+
+        int initialCount = itemCount();
 
         for (CartItem item : items) {
             if (item.getProduct().getId().equals(product.getId())) {
                 item.setQuantity(item.getQuantity() + quantity);
                 // TODO (Task 3): add assert post-condition here
+                // Post-condition and Invariant (Task 3)
+                assert itemCount() >= initialCount : "Item count must not decrease";
+                assert total() >= 0 : "Invariant: total must be >= 0";
                 return;
             }
         }
         items.add(new CartItem(product, quantity));
         // TODO (Task 3): add assert post-condition here
+        // Post-condition and Invariant (Task 3)
+        assert itemCount() > initialCount : "Item count must increase for a new product";
+        assert total() >= 0 : "Invariant: total must be >= 0";
     }
 
     /**
@@ -87,11 +98,17 @@ public class ShoppingCart {
      */
     public double applyDiscount(double discountRate) {
         // TODO (Task 3): add assert pre-condition here
+        // Pre-condition (Task 3)
+        assert discountRate >= 0 && discountRate <= 100 : "Discount rate must be between 0 and 100";
 
         double rawTotal = total();
         double discounted = rawTotal - (rawTotal * discountRate / 100);
 
         // TODO (Task 3): add assert post-condition here
+        // Post-condition and Invariant (Task 3)
+        assert (discountRate == 0) || (discounted <= rawTotal) : "Discounted total must be <= original total";
+        assert discounted >= 0 : "Invariant: discounted total must be >= 0";
+
         return discounted;
     }
 

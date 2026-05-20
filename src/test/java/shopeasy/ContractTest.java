@@ -52,21 +52,67 @@ class ContractTest {
 
     // -----------------------------------------------------------------------
     // TODO: Write your contract tests below.
-    //
-    // EXAMPLE — pre-condition violation (fill in the correct assertion):
-    //
-    // @Test
-    // void addItem_nullProduct_shouldViolatePreCondition() {
-    //     assertThatThrownBy(() -> cart.addItem(null, 1))
-    //             .isInstanceOf(AssertionError.class);
-    // }
-    //
-    // EXAMPLE — pre-condition holds (valid input):
-    //
-    // @Test
-    // void addItem_validInput_shouldNotThrow() {
-    //     assertThatCode(() -> cart.addItem(product, 3)).doesNotThrowAnyException();
-    // }
+    // --- ShoppingCart Contracts ---
+
+    @Test
+    void addItem_nullProduct_shouldViolatePreCondition() {
+        assertThatThrownBy(() -> cart.addItem(null, 1))
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void addItem_zeroQuantity_shouldViolatePreCondition() {
+        assertThatThrownBy(() -> cart.addItem(product, 0))
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void addItem_validInput_shouldNotThrow() {
+        assertThatCode(() -> cart.addItem(product, 3)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void applyDiscount_negativeRate_shouldViolatePreCondition() {
+        assertThatThrownBy(() -> cart.applyDiscount(-10.0))
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void applyDiscount_tooLargeRate_shouldViolatePreCondition() {
+        assertThatThrownBy(() -> cart.applyDiscount(150.0))
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void applyDiscount_validInput_shouldNotThrow() {
+        cart.addItem(product, 1);
+        assertThatCode(() -> cart.applyDiscount(50.0)).doesNotThrowAnyException();
+    }
+
+    // --- PriceCalculator Contracts ---
+
+    @Test
+    void calculate_negativeBasePrice_shouldViolatePreCondition() {
+        assertThatThrownBy(() -> calculator.calculate(-10.0, 10.0, 10.0))
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void calculate_invalidDiscount_shouldViolatePreCondition() {
+        assertThatThrownBy(() -> calculator.calculate(100.0, 150.0, 10.0))
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void calculate_invalidTax_shouldViolatePreCondition() {
+        assertThatThrownBy(() -> calculator.calculate(100.0, 10.0, -5.0))
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void calculate_validInput_shouldNotThrow() {
+        assertThatCode(() -> calculator.calculate(100.0, 10.0, 10.0)).doesNotThrowAnyException();
+    }
     // -----------------------------------------------------------------------
 
 }

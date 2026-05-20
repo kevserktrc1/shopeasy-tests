@@ -96,16 +96,17 @@ class PriceCalculatorSpecTest {
 
     /**
      * Exceptional/Invalid Inputs: Negative base price, negative discount, negative tax.
-     * Since validation (Pre-conditions) is added in Task 3, currently it just processes the raw math.
+     * With Task 3 contracts in place, these now correctly throw AssertionErrors.
      */
-    @ParameterizedTest(name = "base={0}, disc={1}%, tax={2}% => expected={3}")
+    @ParameterizedTest(name = "base={0}, disc={1}%, tax={2}% violates preconditions")
     @CsvSource({
-            "-100.0, 10.0, 10.0, -99.0",  // Negative base price
-            "100.0, -10.0, 10.0, 121.0",  // Negative discount (technically adds to price)
-            "100.0, 10.0, -10.0, 81.0"    // Negative tax (technically reduces price)
+            "-100.0, 10.0, 10.0",  // Negative base price
+            "100.0, -10.0, 10.0",  // Negative discount
+            "100.0, 10.0, -10.0"   // Negative tax
     })
-    void invalidInputsCalculateMathematically(double base, double disc, double tax, double expected) {
-        assertThat(calculator.calculate(base, disc, tax)).isCloseTo(expected, within(0.001));
+    void invalidInputsThrowAssertionError(double base, double disc, double tax) {
+        assertThatThrownBy(() -> calculator.calculate(base, disc, tax))
+                .isInstanceOf(AssertionError.class);
     }
 
     /** Helper Method Test: applyDiscountOnly calculates with 0% tax implicitly. */
