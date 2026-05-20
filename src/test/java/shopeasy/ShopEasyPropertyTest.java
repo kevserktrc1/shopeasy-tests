@@ -41,32 +41,78 @@ class ShopEasyPropertyTest {
     // -----------------------------------------------------------------------
     // TODO: Write your properties below.
     //
-    // EXAMPLE STRUCTURE:
-    //
-    // /**
-    //  * Property: The final price is always non-negative.
-    //  * Bug class caught: any implementation path that produces a negative result
-    //  *                   (e.g., discount > 100 applied to negative base).
-    //  */
-    // @Property
-    // void finalPriceIsNeverNegative(
-    //         @ForAll @DoubleRange(min = 0, max = 10_000) double base,
-    //         @ForAll @DoubleRange(min = 0, max = 100)   double discount,
-    //         @ForAll @DoubleRange(min = 0, max = 100)   double tax) {
-    //
-    //     PriceCalculator calc = new PriceCalculator();
-    //     double result = calc.calculate(base, discount, tax);
-    //     assertThat(result).isGreaterThanOrEqualTo(0.0);
-    // }
-    //
-    // // Custom provider example:
-    // @Provide
-    // Arbitrary<Product> validProducts() {
-    //     return Combinators.combine(
-    //             Arbitraries.strings().alpha().ofMinLength(1).ofMaxLength(5),
-    //             Arbitraries.doubles().between(0.01, 500.0)
-    //     ).as((name, price) -> new Product("P-" + name, name, price, 100));
-    // }
+    /**
+     * Property 1: Identity
+     * 1) Plain English: A 0% discount and 0% tax returns exactly the base price.
+     * 2) Bug class caught: Mathematical offset errors, applying default flat fees instead of
+     * percentages, or logic branches that incorrectly handle 0.0 as a special case.
+     */
+    @Property
+    void identityProperty(
+            @ForAll @DoubleRange(min = 0.0, max = 10_000.0) double basePrice) {
+
+        PriceCalculator calc = new PriceCalculator();
+        double result = calc.calculate(basePrice, 0.0, 0.0);
+
+        assertThat(result).isCloseTo(basePrice, within(0.001));
+    }
+
+    /**
+     * Property 2: Monotonicity
+     * 1) Plain English: For any fixed base price and tax, increasing the discount rate
+     * never increases the final price.
+     * 2) Bug class caught: Inverted logic (e.g., adding the discount instead of subtracting),
+     * percentage calculation errors, or variable overflow issues.
+     */
+    @Property
+    void monotonicityProperty(
+            @ForAll @DoubleRange(min = 0.0, max = 10_000.0) double base,
+            @ForAll @DoubleRange(min = 0.0, max = 50.0) double lowerDiscount,
+            @ForAll @DoubleRange(min = 51.0, max = 100.0) double higherDiscount,
+            @ForAll @DoubleRange(min = 0.0, max = 100.0) double tax) {
+
+        PriceCalculator calc = new PriceCalculator();
+        double priceWithLowerDiscount = calc.calculate(base, lowerDiscount, tax);
+        double priceWithHigherDiscount = calc.calculate(base, higherDiscount, tax);
+
+        // A higher discount rate must always result in a price <= the lower discount price
+        assertThat(priceWithHigherDiscount).isLessThanOrEqualTo(priceWithLowerDiscount);
+    }
+
+    /**
+     * Property 3: Cart Commutativity
+     * 1) Plain English: Adding item A then item B to a cart yields the exact same total
+     * as adding item B then item A.
+     * 2) Bug class caught: State-dependent bugs where the cart total depends on the order
+     * of insertion, or accidental overwriting of cart items instead of appending.
+     */
+    @Property
+    void cartCommutativity(
+            @ForAll("validProducts") Product p1,
+            @ForAll("validProducts") Product p2,
+            @ForAll @IntRange(min = 1, max = 10) int qty1,
+            @ForAll @IntRange(min = 1, max = 10) int qty2) {
+
+        ShoppingCart cartA = new ShoppingCart();
+        cartA.addItem(p1, qty1);
+        cartA.addItem(p2, qty2);
+
+        ShoppingCart cartB = new ShoppingCart();
+        cartB.addItem(p2, qty2);
+        cartB.addItem(p1, qty1);
+
+        assertThat(cartA.total()).isCloseTo(cartB.total(), within(0.001));
+    }
+
+    // Custom data provider required by Task 4
+    // Generates random, valid Product instances to feed into property tests
+    @Provide
+    Arbitrary<Product> validProducts() {
+        return Combinators.combine(
+                Arbitraries.strings().alpha().ofMinLength(3).ofMaxLength(8),
+                Arbitraries.doubles().between(1.0, 500.0)
+        ).as((name, price) -> new Product("P-" + name, name, price, 100));
+    }
     // -----------------------------------------------------------------------
 
 }
